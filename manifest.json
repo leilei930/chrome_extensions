@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Hello Extensions",
+  "description": "Base Level Extension",
+  "version": "1.0",
+  "content_scripts": [
+    {
+      "js": ["content.js"],
+      "matches": [
+        "https://developer.chrome.com/docs/extensions/*",
+        "https://developer.chrome.com/docs/webstore/*"
+      ]
+    }
+  ]
+}
