@@ -43,31 +43,66 @@ function waitForElement(selector, timeout = 10000) {
 }
 
 // Function to fill the login form and click the login button
-async function fillLoginFormAndSubmit() {
+async function fillLoginForm() {
   try {
     const usernameField = await waitForElement('input[name="pc-login-username"]');
     const passwordField = await waitForElement('input[name="pc-login-password"]');
-    const loginButton = await waitForElement('div[name="pc-login-btn"]');
 
-    if (usernameField && passwordField && loginButton) {
+    if (usernameField && passwordField) {
       usernameField.value = config.username;
       passwordField.value = config.password;
 
       usernameField.dispatchEvent(new Event('input', { bubbles: true }));
       passwordField.dispatchEvent(new Event('input', { bubbles: true }));
-
-      // Short delay to ensure the form is filled before clicking
-      setTimeout(() => {
-        loginButton.click();
-      }, 500);
     }
   } catch (error) {
-    console.error('Error in fillLoginFormAndSubmit:', error);
+    console.error('Error in fillLoginForm:', error);
   }
 }
 
-// Automatically fill the form and submit when the page loads
-window.addEventListener('load', () => setTimeout(fillLoginFormAndSubmit, Math.random() * 2000 + 1000));
+async function clickLoginButton() {
+  try {
+    const loginButton = await waitForElement('div[name="pc-login-btn"]');
+    if (loginButton) {
+      loginButton.click();
+      // Wait for login to complete
+      await waitForLoginSuccess();
+      console.log('Login successful!');
+    }
+  } catch (error) {
+    console.error('Error in clickLoginButton:', error);
+  }
+}
+
+// Function to wait for login success
+function waitForLoginSuccess(timeout = 10000) {
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
+    const checkLoginStatus = () => {
+      // Check for an element that appears after successful login
+      // You may need to adjust this selector based on the actual page structure
+      const loggedInElement = document.querySelector('.home-pc-head-box');
+      if (loggedInElement) {
+        resolve();
+      } else if (Date.now() - startTime < timeout) {
+        setTimeout(checkLoginStatus, 100);
+      } else {
+        reject(new Error('Login timeout'));
+      }
+    };
+    checkLoginStatus();
+  });
+}
+
+// Automatically fill the form when the page loads
+window.addEventListener('load', () => setTimeout(fillLoginForm, Math.random() * 2000 + 1000));
+
+// Listen for messages from the background script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "performLogin") {
+    clickLoginButton();
+  }
+});
 
 // Remove the message listener for alarm functionality as it's no longer needed
 // chrome.runtime.onMessage.addListener(...);

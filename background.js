@@ -49,9 +49,34 @@ function setAlarmForTestTime() {
   console.log(`Alarm set for ${bookingTime.toLocaleString('en-HK', { timeZone: 'Asia/Hong_Kong' })}`);
 }
 
+function setAlarmForLoginTime() {
+  const now = new Date();
+  const loginTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 22, 40, 0, 0); // 10:40 PM
+  
+  // If it's already past 10:40 PM today, set for tomorrow
+  if (now.getHours() > 22 || (now.getHours() === 22 && now.getMinutes() >= 40)) {
+    loginTime.setDate(loginTime.getDate() + 1);
+  }
+  
+  const delay = Math.max(0, loginTime.getTime() - Date.now() - 1000); // 1 second before login time
+  chrome.alarms.create("loginAlarm", { when: Date.now() + delay });
+  console.log(`Alarm set for ${loginTime.toLocaleString('en-HK', { timeZone: 'Asia/Hong_Kong' })}`);
+}
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "loginAlarm") {
+    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+      if (tabs[0] && tabs[0].url.includes("smartplay.lcsd.gov.hk")) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "performLogin" });
+      }
+    });
+  }
+});
+
 // Set alarm when extension is loaded
 chrome.runtime.onInstalled.addListener(() => {
   console.log('SmartPlay Auto Login extension installed');
+  setAlarmForLoginTime();
 });
 
 // Add this new listener

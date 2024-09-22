@@ -5,7 +5,8 @@
   "description": "Automatically logs in to SmartPlay",
   "permissions": [
     "activeTab",
-    "https://www.smartplay.lcsd.gov.hk/*"
+    "https://www.smartplay.lcsd.gov.hk/*",
+    "alarms"
   ],
   "content_scripts": [
     {
